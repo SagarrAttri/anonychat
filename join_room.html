@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Join Chat Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      }
+      h1 {
+        text-align: center;
+        margin-top: 0;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      input[type="text"], input[type="submit"] {
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      input[type="submit"] {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      input[type="submit"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+      }
+      a {
+        text-decoration: none;
+        color: #007bff;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 600px) {
+        .container {
+          margin: 10px;
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Join Chat Room</h1>
+      <form method="POST">
+        Room Code: <input type="text" name="room_code" required>
+        {% if ask_name %}
+        Your Name: <input type="text" name="username" required>
+        {% endif %}
+        <input type="submit" value="Join Room">
+      </form>
+      <br>
+      <a href="{{ url_for('index') }}">Back</a>
+    </div>
+  </body>
+</html>
