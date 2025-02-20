@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Chat Room {{ room_code }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Include Socket.IO client library -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.min.js"></script>
+    
+    <style>
+      :root {
+            --primary-color: #6C63FF;
+            --secondary-color: #8A85FF;
+            --accent-color: #FF7F50;
+            --background-gradient: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--background-gradient);
+            color: #2d3436;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h2 {
+          margin: 0;
+          color: #827cff;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+     
+        }
+        
+
+        .header button {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-color), #FF6B6B);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(255, 127, 80, 0.2);
+        }
+
+        .header button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 127, 80, 0.3);
+        }
+
+        .chat-container {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .chat-main {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #chat {
+            height: 60vh;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        #chat p {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        #chat p:hover {
+            transform: translateY(-2px) perspective(1000px) rotateX(5deg);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #chat p::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, transparent 100%);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        #chat-form {
+            display: flex;
+            gap: 1rem;
+        }
+
+        #chat-form input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid rgba(108, 99, 255, 0.1);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #chat-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        #chat-form button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(108, 99, 255, 0.2);
+        }
+
+        #chat-form button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .user-list {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-list h3 {
+            margin: 0 0 1.5rem 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .user-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .user-list ul li {
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            background: rgba(108, 99, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-list ul li::before {
+            content: '•';
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .user-list ul li:hover {
+            transform: translateX(5px);
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .chat-main,
+            .user-list {
+                width: 100%;
+                padding: 1.5rem;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .typing-indicator {
+            padding: 1rem;
+            font-style: italic;
+            color: var(--primary-color);
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+  </head>
+  <body>
+    <!-- Header with Room Code and Leave Button -->
+    <div class="header">
+      <h2>Room: {{ room_code }}</h2>
+      <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+    
+    <!-- Main Chat Layout -->
+    <div class="chat-container">
+      <div class="chat-main">
+        <div id="chat"></div>
+        <form id="chat-form">
+          <input id="message" autocomplete="off" placeholder="Type your message">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+      <!-- User List Sidebar -->
+      <div class="user-list">
+        <h3>Users</h3>
+        <ul id="users"></ul>
+      </div>
+    </div>
+    
+    <script>
+      // Create the audio object using the locally hosted file.
+      var audio = new Audio("c:\Users\attri\Downloads\discord-notification.mp3");
+      
+      // Unlock audio playback on first user interaction.
+      document.addEventListener('click', function unlockAudio() {
+        audio.play().then(() => {
+          audio.pause();
+        }).catch((err) => {
+          console.log("Audio play was prevented:", err);
+        });
+        document.removeEventListener('click', unlockAudio);
+      });
+      
+      var socket = io();
+      var room = "{{ room_code }}";
+      socket.emit('join', {'room': room});
+      
+      // Listen for chat messages.
+      socket.on('message', function(data) {
+         var chat = document.getElementById('chat');
+         var p = document.createElement('p');
+         p.innerHTML = data;
+         chat.appendChild(p);
+         chat.scrollTop = chat.scrollHeight;
+         // Play notification sound on each new message.
+         audio.play();
+      });
+      
+      // Update user list dynamically.
+      socket.on('update_users', function(data) {
+         var usersList = document.getElementById('users');
+         usersList.innerHTML = "";
+         data.forEach(function(user) {
+             var li = document.createElement('li');
+             li.textContent = user;
+             usersList.appendChild(li);
+         });
+      });
+      
+      // Send messages.
+      document.getElementById('chat-form').onsubmit = function(e) {
+         e.preventDefault();
+         var msg = document.getElementById('message').value;
+         if (msg.trim().length === 0) return;
+         socket.emit('message', {'room': room, 'message': msg});
+         document.getElementById('message').value = '';
+         return false;
+      };
+      
+      // Leave room function.
+      function leaveRoom() {
+         window.location.href = "{{ url_for('index') }}";
+      }
+    </script>
+  </body>
+</html>
