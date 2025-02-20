@@ -1,5 +1,0 @@
-Flask
-Flask-SocketIO
-gunicorn
-nest_asyncio
-eventlet
